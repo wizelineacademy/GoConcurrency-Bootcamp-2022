@@ -60,7 +60,7 @@ The application is an API that interacts with 'https://pokeapi.co/api/v2/'. This
 3. (GET) /api/pokemons
  - Returns all the pokemons in cache (this is only for visualization).
  
-## Deliverable (due Friday, May 13th, 23:59PM)
+## Deliverable (due Monday, July 25th, 23:59PM)
  
 Based on the self-study material and mentorship covered until this deliverable, we suggest you perform the following:
  
@@ -81,7 +81,7 @@ In the end, you need to:
  
 > Important: In case of any error, the whole process must stop (hint: channels) except by the pipeline pattern. In that case, we need to stop, but it's OK to have some batches processed.
  
-## Final Deliverable (due Wednesday, June 8th, 2:00PM)
+## Final Deliverable (due Monday, August 1st, 23:59PM)
 > Important: this is the final deliverable, so you must include all the requirements.
  
 ## Submitting the deliverables
@@ -89,7 +89,7 @@ In the end, you need to:
 For submitting your work, you should follow these steps:
  
 1. Create a pull request with your code, targeting the master branch of your fork.
-2. Fill out this [form](https://forms.gle/urV6szfnCVMqp4UL9), including the PR’s URL
+2. Fill out this [form](https://forms.gle/h1dEagxmwkytVUJM6), including the PR’s URL
 3. Stay tuneD for feedback
 4. Do the changes according to the reviewer's comments
  
