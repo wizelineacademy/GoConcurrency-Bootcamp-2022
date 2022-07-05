@@ -90,8 +90,8 @@ For submitting your work, you should follow these steps:
  
 1. Create a pull request with your code, targeting the master branch of your fork.
 2. Fill out this [form](https://forms.gle/h1dEagxmwkytVUJM6), including the PR’s URL
-3. Stay tuneD for feedback
-4. Do the changes according to the reviewer's comments
+3. Stay tuned for feedback, your mentor will provide feedback writting comments in your PR, if you need further information or have questions, please request a 1:1 session.
+4. Do the changes according to the reviewer's comments and feedback received
  
 ## Documentation
  
