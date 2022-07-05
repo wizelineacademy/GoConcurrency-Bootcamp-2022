@@ -2,8 +2,8 @@
  
 ## Introduction
  
-Thank you for participating in the Advanced GO Bootcamp course!
-Here, you'll find instructions for completing your certification.
+Thank you for participating in the GO Concurrency Bootcamp.
+Here, you'll find instructions for completing your capstone project and graduate.
  
 ## The Challenge
  
