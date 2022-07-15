@@ -95,9 +95,42 @@ For submitting your work, you should follow these steps:
  
 ## Documentation
  
-### Must to learn
-
 ### Self-Study Material
+
+#### An Introdiction to Concurrency
+- [Why Is Concurrency Hard?](https://rits.github-pages.ucl.ac.uk/research-computing-with-cpp/07PerformanceProgramming/Sec04ConcurrencyProblems.html)
+- [Race Conditions](https://www.youtube.com/watch?v=lqDGzTh9kRg)
+- [Atomicity](https://www.youtube.com/watch?v=xXi9yWbXkHU)
+- [Memory Access Synchronization](https://notes.shichao.io/gopl/ch9/)
+- [Deadlocks, Livelocks, and Starvation](https://www.youtube.com/watch?v=gZ-wl1no_3s)
+- [Determining Concurrency Safety](https://medium.com/dm03514-tech-blog/golang-candidates-and-contexts-a-heuristic-approach-to-race-condition-detection-e2b230e70d08)
+#### Modeling Your Code: Communicating Sequential Processes
+- [The Difference Between Concurrency and Parallelism](https://www.youtube.com/watch?v=oV9rvDllKEg)
+- [What is CSP?](https://www.youtube.com/watch?v=G9ePu0Nh2BQ)
+- [Go's Philosophy on Concurrency](https://github.com/golang/go/wiki/MutexOrChannel)
+#### Go's Concurreny Building Blocks
+- [Goroutines](https://www.youtube.com/watch?v=ARHXmR0_MGY)
+- [The sync Package](https://www.youtube.com/watch?v=7oh5u_N1BeQ)
+- [WaitGroup](https://www.youtube.com/watch?v=0BPSR-W4GSY)
+- [Mutex and RWMutex](https://www.youtube.com/watch?v=Rse_jt3ROUI)
+- [Cond](https://medium.com/@pinkudebnath/head-first-into-sync-cond-of-golang-be71779699b1)
+- [Once](https://www.youtube.com/watch?v=9yyAI3tD97Q)
+- [Pool](https://www.youtube.com/watch?v=PnYItFJy7IQ)
+- [Channels](https://www.youtube.com/watch?v=kqJsaVilv9A)
+- [The select Statement](https://www.youtube.com/watch?v=2HsMsbMDwsg)
+- [The GOMAXPROCS Lever](https://www.ardanlabs.com/blog/2014/01/concurrency-goroutines-and-gomaxprocs.html)
+#### Concurreny Patterns in Go
+- [Confinement](http://www.inanzzz.com/index.php/post/w9mh/using-serial-confinement-discipline-to-achieve-thread-safety-in-golang)
+- [The for-select Loop](https://golangbyexample.com/select-forloop-outside-go/)
+- [Preventing Goroutine Leaks](https://betterprogramming.pub/common-goroutine-leaks-that-you-should-avoid-fe12d12d6ee)
+- [Error Handling](https://www.atatus.com/blog/goroutines-error-handling/)
+- [Pipelines](https://www.youtube.com/watch?v=44B9JCbCj8g)
+- [Generators ](http://www.golangpatterns.info/concurrency/generators)
+- [Fan-Out, Fan-In](https://www.youtube.com/watch?v=rDRa23k70CU)(Min 13:50)
+- [The or-done-channel, tee-channel, bridge-channel](https://dev.to/vietmle_/5-concurrency-patterns-in-golang-dm4)
+- [Queuing](https://dev.to/narasimha1997/crafting-a-concurrent-queue-in-golang-2n)
+- [The context Package](https://www.youtube.com/watch?v=LSzR0VEraWw)
  
+#### Modeling Your Code: Communicating Sequential Processes
 - [Golang Concurrency Patterns](https://www.karanpratapsingh.com/courses/go/advanced-concurrency-patterns)
 - [Pipelines and cancellation](https://go.dev/blog/pipelines)
