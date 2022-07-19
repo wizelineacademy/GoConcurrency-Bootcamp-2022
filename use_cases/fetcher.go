@@ -55,11 +55,10 @@ func GetResponses(from, to int, f Fetcher) <-chan models.Pokemon {
 	return ch
 }
 
-func PingAPI(id int, f Fetcher, ch chan models.Pokemon) error {
+func PingAPI(id int, f Fetcher, ch chan models.Pokemon) {
 	pokemon, err := f.api.FetchPokemon(id)
 	if err != nil {
 		log.Printf("ERROR: fetch pokemon failed")
-		return err
 	}
 
 	var flatAbilities []string
@@ -69,5 +68,4 @@ func PingAPI(id int, f Fetcher, ch chan models.Pokemon) error {
 	pokemon.FlatAbilityURLs = strings.Join(flatAbilities, "|")
 
 	ch <- pokemon
-	return nil
 }
