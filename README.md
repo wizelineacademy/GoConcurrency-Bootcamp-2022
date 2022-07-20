@@ -60,12 +60,12 @@ The application is an API that interacts with 'https://pokeapi.co/api/v2/'. This
 3. (GET) /api/pokemons
  - Returns all the pokemons in cache (this is only for visualization).
  
-## Deliverable (due Monday, July 25th, 23:59PM)
+## Final Deliverable (due Monday, August 1st, 23:59PM)
  
-Based on the self-study material and mentorship covered until this deliverable, we suggest you perform the following:
+Based on the self-study material and mentorship covered, we suggest you perform the following:
  
 1. Run the project, play with it and understand the problem with the API
-2. Select two of the following patterns to solve the related problem:
+2. Implement the following patterns to solve the related problem:
 - Generator: This pattern can be used to handle multiple requests with potential parallelism. You can implement it in the /provide endpoint to hit the numerous endpoints asynchronously.
  *(Goal: Process 100 ids in less than 3 seconds)*
  - Fan in - Fan-out: These two patterns can be used together to handle multiple inputs (fan-in) and outputs (fan-out). You can implement these patterns in /refresh-cache to read the csv line by line and hit the abilities endpoint concurrently.
@@ -76,13 +76,11 @@ Based on the self-study material and mentorship covered until this deliverable, 
 3. Implement one pattern at a time, generate a pull request and ask for feedback from your mentor while you are developing the following pattern
  
 In the end, you need to:
-- Solve two of the three problems presented on the API with concurrency patterns
+- Solve the three problems presented on the API with concurrency patterns
 - Present a comparison table of the time processes
  
 > Important: In case of any error, the whole process must stop (hint: channels) except by the pipeline pattern. In that case, we need to stop, but it's OK to have some batches processed.
  
-## Final Deliverable (due Monday, August 1st, 23:59PM)
-> Important: this is the final deliverable, so you must include all the requirements.
  
 ## Submitting the deliverables
  
