@@ -12,6 +12,7 @@ func Init() *gin.Engine {
 	r := gin.Default()
 
 	api := repositories.PokeAPI{}
+
 	storage := repositories.LocalStorage{}
 	cache := repositories.NewCache()
 

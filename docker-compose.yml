@@ -1,0 +1,9 @@
+version: '3'
+
+services:
+    #  start Redis, and ensure that data is stored to a mounted volume
+  redis:
+    image: 'redis:alpine'
+    ports:
+      - "6379:6379"
+    restart: always

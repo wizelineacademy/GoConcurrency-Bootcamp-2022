@@ -21,7 +21,7 @@ func NewAPI(fetcher fetcher, refresher refresher, getter getter) API {
 }
 
 type fetcher interface {
-	Fetch(from, to int) error
+	Fetch(from, to int) <-chan error
 }
 
 type refresher interface {
@@ -45,13 +45,17 @@ func (api API) FillCSV(c *gin.Context) {
 		fmt.Println(err)
 		return
 	}
-
-	if err := api.Fetch(requestBody.From, requestBody.To); err != nil {
-		c.Status(http.StatusInternalServerError)
-		fmt.Println(err)
-		return
-	}
-
+	errChan := api.Fetch(requestBody.From, requestBody.To)
+	go func() {
+		for {
+			select {
+			case err := <-errChan:
+				c.Status(http.StatusInternalServerError)
+				fmt.Println("err: ", err)
+				return
+			}
+		}
+	}()
 	c.Status(http.StatusOK)
 }
 

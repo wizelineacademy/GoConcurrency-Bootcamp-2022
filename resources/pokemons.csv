@@ -1,11 +1,11 @@
 id,name,height,weight,flat_abilities
-1,bulbasaur,7,69,https://pokeapi.co/api/v2/ability/65/|https://pokeapi.co/api/v2/ability/34/
-2,ivysaur,10,130,https://pokeapi.co/api/v2/ability/65/|https://pokeapi.co/api/v2/ability/34/
 3,venusaur,20,1000,https://pokeapi.co/api/v2/ability/65/|https://pokeapi.co/api/v2/ability/34/
 4,charmander,6,85,https://pokeapi.co/api/v2/ability/66/|https://pokeapi.co/api/v2/ability/94/
-5,charmeleon,11,190,https://pokeapi.co/api/v2/ability/66/|https://pokeapi.co/api/v2/ability/94/
-6,charizard,17,905,https://pokeapi.co/api/v2/ability/66/|https://pokeapi.co/api/v2/ability/94/
-7,squirtle,5,90,https://pokeapi.co/api/v2/ability/67/|https://pokeapi.co/api/v2/ability/44/
-8,wartortle,10,225,https://pokeapi.co/api/v2/ability/67/|https://pokeapi.co/api/v2/ability/44/
 9,blastoise,16,855,https://pokeapi.co/api/v2/ability/67/|https://pokeapi.co/api/v2/ability/44/
+1,bulbasaur,7,69,https://pokeapi.co/api/v2/ability/65/|https://pokeapi.co/api/v2/ability/34/
+2,ivysaur,10,130,https://pokeapi.co/api/v2/ability/65/|https://pokeapi.co/api/v2/ability/34/
+7,squirtle,5,90,https://pokeapi.co/api/v2/ability/67/|https://pokeapi.co/api/v2/ability/44/
 10,caterpie,3,29,https://pokeapi.co/api/v2/ability/19/|https://pokeapi.co/api/v2/ability/50/
+8,wartortle,10,225,https://pokeapi.co/api/v2/ability/67/|https://pokeapi.co/api/v2/ability/44/
+6,charizard,17,905,https://pokeapi.co/api/v2/ability/66/|https://pokeapi.co/api/v2/ability/94/
+5,charmeleon,11,190,https://pokeapi.co/api/v2/ability/66/|https://pokeapi.co/api/v2/ability/94/

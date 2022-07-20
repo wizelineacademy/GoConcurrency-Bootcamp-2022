@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"fmt"
+	"sync"
 
 	"GoConcurrency-Bootcamp-2022/models"
 
@@ -12,7 +13,8 @@ type PokeAPI struct{}
 
 const url = "https://pokeapi.co/api/v2/"
 
-func (pa PokeAPI) FetchPokemon(id int) (models.Pokemon, error) {
+func (pa PokeAPI) FetchPokemon(id int, wg *sync.WaitGroup) (models.Pokemon, error) {
+	defer wg.Done()
 	client := resty.New()
 
 	poke := models.Pokemon{}
