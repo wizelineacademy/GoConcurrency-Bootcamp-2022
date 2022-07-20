@@ -76,7 +76,7 @@ Based on the self-study material and mentorship covered, we suggest you perform 
 3. Implement one pattern at a time, generate a pull request and ask for feedback from your mentor while you are developing the following pattern
  
 In the end, you need to:
-- Solve the three problems presented on the API with concurrency patterns
+- Solve two of the three problems presented on the API with concurrency patterns. Earn extra points if you solve all of the problems.
 - Present a comparison table of the time processes
  
 > Important: In case of any error, the whole process must stop (hint: channels) except by the pipeline pattern. In that case, we need to stop, but it's OK to have some batches processed.
