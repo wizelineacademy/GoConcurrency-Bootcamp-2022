@@ -1,0 +1,13 @@
+version: "3.9"
+services:
+  redis:
+    image: redis
+    container_name: redis
+    command: "redis-server --loglevel warning"
+    # volumes:
+    #   - redis_data:/data/
+    ports:
+      - "6379:6379"
+    restart: "always"
+# volumes:
+#   redis_data:
