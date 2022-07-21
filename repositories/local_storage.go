@@ -3,6 +3,7 @@ package repositories
 import (
 	"encoding/csv"
 	"fmt"
+	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -16,7 +17,11 @@ const filePath = "resources/pokemons.csv"
 
 func (l LocalStorage) Write(pokemons []models.Pokemon) error {
 	file, fErr := os.Create(filePath)
-	defer file.Close()
+	defer func(){
+		if err := file.Close(); err != nil {
+			log.Printf("ERROR: file not closed")
+		}
+	}()
 	if fErr != nil {
 		return fErr
 	}
@@ -32,7 +37,11 @@ func (l LocalStorage) Write(pokemons []models.Pokemon) error {
 
 func (l LocalStorage) Read() ([]models.Pokemon, error) {
 	file, fErr := os.Open(filePath)
-	defer file.Close()
+	defer func(){
+		if err := file.Close(); err != nil {
+			log.Printf("ERROR: file not closed")
+		}
+	}()
 	if fErr != nil {
 		return nil, fErr
 	}
