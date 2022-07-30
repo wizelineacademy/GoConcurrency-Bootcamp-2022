@@ -2,6 +2,7 @@ package use_cases
 
 import (
 	"strings"
+	"sync"
 
 	"GoConcurrency-Bootcamp-2022/models"
 )
@@ -11,7 +12,7 @@ type api interface {
 }
 
 type writer interface {
-	Write(pokemons []models.Pokemon) error
+	Write(pokemons <-chan models.Pokemon) error
 }
 
 type Fetcher struct {
@@ -24,21 +25,43 @@ func NewFetcher(api api, storage writer) Fetcher {
 }
 
 func (f Fetcher) Fetch(from, to int) error {
-	var pokemons []models.Pokemon
-	for id := from; id <= to; id++ {
-		pokemon, err := f.api.FetchPokemon(id)
-		if err != nil {
-			return err
-		}
+	return f.storage.Write(
+		f.pokeGenerator(from, to),
+	)
+}
 
-		var flatAbilities []string
-		for _, t := range pokemon.Abilities {
-			flatAbilities = append(flatAbilities, t.Ability.URL)
-		}
-		pokemon.FlatAbilityURLs = strings.Join(flatAbilities, "|")
+func (f Fetcher) pokeGenerator(from, to int) <-chan models.Pokemon {
+	var (
+		n        = to - from + 1
+		pokemons = make(chan models.Pokemon, n)
+		wg       = sync.WaitGroup{}
+	)
 
-		pokemons = append(pokemons, pokemon)
+	wg.Add(n)
+
+	for i := from; i <= to; i++ {
+		id := i
+		go func() error {
+			defer wg.Done()
+
+			pokemon, err := f.api.FetchPokemon(id)
+			if err != nil {
+				return err
+			}
+
+			var flatAbilities []string
+			for _, t := range pokemon.Abilities {
+				flatAbilities = append(flatAbilities, t.Ability.URL)
+			}
+			pokemon.FlatAbilityURLs = strings.Join(flatAbilities, "|")
+			pokemons <- pokemon
+			return nil
+		}()
 	}
 
-	return f.storage.Write(pokemons)
+	go func() {
+		wg.Wait()
+		close(pokemons)
+	}()
+	return pokemons
 }
