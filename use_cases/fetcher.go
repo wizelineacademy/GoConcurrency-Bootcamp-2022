@@ -29,7 +29,7 @@ func (f Fetcher) Fetch(from, to int) error {
 	var errors []error
 	var wg = sync.WaitGroup{}
 
-	numWorkers := 10
+	numWorkers := 20
 
 	// generate channel by nums id
 	chGenerator := make(chan int)
