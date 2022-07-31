@@ -2,6 +2,7 @@ package use_cases
 
 import (
 	"GoConcurrency-Bootcamp-2022/models"
+	"context"
 	"fmt"
 	"strings"
 	"sync"
@@ -26,7 +27,7 @@ func NewFetcher(api api, storage writer) Fetcher {
 
 func (f Fetcher) Fetch(from, to int) error {
 	var pokemons []models.Pokemon
-	var errors []error
+	var errorGlobal error
 	var wg = sync.WaitGroup{}
 
 	numWorkers := 20
@@ -35,35 +36,48 @@ func (f Fetcher) Fetch(from, to int) error {
 	chGenerator := make(chan int)
 	go f.generatorChannel(from, to, chGenerator)
 
-	// create 10 workers
+	ctx, cancel := context.WithCancel(context.Background())
+
+	defer cancel()
+
 	for i := 0; i < numWorkers; i++ {
 		wg.Add(1)
 		go func(chGenerator chan int) {
 			defer wg.Done()
-			for ch := range chGenerator {
-				pokemon, err := f.api.FetchPokemon(ch)
+			for {
+				select {
+				case p, ok := <-chGenerator:
+					if !ok {
+						return
+					}
+					pokemon, err := f.api.FetchPokemon(p)
 
-				if err != nil {
-					errors = append(errors, fmt.Errorf("error get id %d, %w", ch, err))
-					continue
+					if err != nil {
+						errorGlobal = err
+						// propagated error all
+						cancel()
+					}
+
+					var flatAbilities []string
+					for _, t := range pokemon.Abilities {
+						flatAbilities = append(flatAbilities, t.Ability.URL)
+					}
+					pokemon.FlatAbilityURLs = strings.Join(flatAbilities, "|")
+
+					pokemons = append(pokemons, pokemon)
+				case <-ctx.Done():
+					fmt.Println("error propagated")
+					return
 				}
-
-				var flatAbilities []string
-				for _, t := range pokemon.Abilities {
-					flatAbilities = append(flatAbilities, t.Ability.URL)
-				}
-				pokemon.FlatAbilityURLs = strings.Join(flatAbilities, "|")
-
-				pokemons = append(pokemons, pokemon)
-
 			}
 		}(chGenerator)
 	}
 
 	wg.Wait()
 
-	// print errors
-	fmt.Println("errors count", len(errors))
+	if errorGlobal != nil {
+		return errorGlobal
+	}
 
 	return f.storage.Write(pokemons)
 }
