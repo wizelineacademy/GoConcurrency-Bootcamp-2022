@@ -59,10 +59,14 @@ func (api API) FillCSV(c *gin.Context) {
 
 //RefreshCache feeds the csv data and save in redis
 func (api API) RefreshCache(c *gin.Context) {
+	t := time.Now()
 	if err := api.Refresh(c); err != nil {
+		fmt.Println(err)
 		c.Status(http.StatusInternalServerError)
 		return
 	}
+
+	fmt.Printf("time total concurrency %v (seconds), 40 register", time.Since(t).Seconds())
 
 	c.Status(http.StatusOK)
 }
