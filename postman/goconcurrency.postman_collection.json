@@ -1,0 +1,91 @@
+{
+	"id": "47fb10fc-1810-b3c0-b28a-1e120d77c7e1",
+	"name": "goconcurrency",
+	"description": "",
+	"order": [
+		"03597911-5be6-c29a-d494-bf307fad0cca",
+		"7fbe2ea4-f482-652b-7c5c-633e1a59094e",
+		"76c61757-7ee5-34a2-5b19-057bf501ace0"
+	],
+	"folders": [],
+	"folders_order": [],
+	"timestamp": 1659226047345,
+	"owner": "1007436",
+	"public": false,
+	"requests": [
+		{
+			"id": "03597911-5be6-c29a-d494-bf307fad0cca",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "http://localhost:8080/api/provide",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1659304349123,
+			"name": "provide",
+			"description": "",
+			"collectionId": "47fb10fc-1810-b3c0-b28a-1e120d77c7e1",
+			"responses": [],
+			"rawModeData": "{\n \"from\": 1,\n \"to\": 100\n}"
+		},
+		{
+			"id": "76c61757-7ee5-34a2-5b19-057bf501ace0",
+			"headers": "",
+			"headerData": [],
+			"url": "http://localhost:8080/api/pokemons",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "GET",
+			"data": null,
+			"dataMode": "params",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1659226672428,
+			"name": "pokemons",
+			"description": "",
+			"collectionId": "47fb10fc-1810-b3c0-b28a-1e120d77c7e1",
+			"responses": []
+		},
+		{
+			"id": "7fbe2ea4-f482-652b-7c5c-633e1a59094e",
+			"headers": "",
+			"headerData": [],
+			"url": "http://localhost:8080/api/refresh-cache",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "PUT",
+			"data": null,
+			"dataMode": "params",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1659226659865,
+			"name": "refresh-cache",
+			"description": "",
+			"collectionId": "47fb10fc-1810-b3c0-b28a-1e120d77c7e1",
+			"responses": []
+		}
+	]
+}
