@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"time"
 
 	"GoConcurrency-Bootcamp-2022/models"
 
@@ -34,7 +35,7 @@ type getter interface {
 
 //FillCSV fill the local CSV with data from PokeAPI. By default will fetch from id 1 to 10 unless there are other information on the body
 func (api API) FillCSV(c *gin.Context) {
-
+	t := time.Now()
 	requestBody := struct {
 		From int `json:"from"`
 		To   int `json:"to"`
@@ -51,6 +52,7 @@ func (api API) FillCSV(c *gin.Context) {
 		fmt.Println(err)
 		return
 	}
+	fmt.Printf("time total sequential %v (seconds), num ids %d-%d", time.Since(t).Seconds(), requestBody.From, requestBody.To)
 
 	c.Status(http.StatusOK)
 }
