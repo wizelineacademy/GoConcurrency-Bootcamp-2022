@@ -1,8 +1,10 @@
 package repositories
 
 import (
+	"context"
 	"encoding/csv"
 	"fmt"
+	"io"
 	"os"
 	"strconv"
 	"strings"
@@ -16,10 +18,12 @@ const filePath = "resources/pokemons.csv"
 
 func (l LocalStorage) Write(pokemons []models.Pokemon) error {
 	file, fErr := os.Create(filePath)
-	defer file.Close()
+
 	if fErr != nil {
 		return fErr
 	}
+
+	defer file.Close()
 
 	w := csv.NewWriter(file)
 	records := buildRecords(pokemons)
@@ -30,25 +34,55 @@ func (l LocalStorage) Write(pokemons []models.Pokemon) error {
 	return nil
 }
 
-func (l LocalStorage) Read() ([]models.Pokemon, error) {
+func (l LocalStorage) Read(ctx context.Context, cancel context.CancelFunc) <-chan models.Pokemon {
 	file, fErr := os.Open(filePath)
-	defer file.Close()
 	if fErr != nil {
-		return nil, fErr
+		cancel()
+		return nil
 	}
 
-	r := csv.NewReader(file)
-	records, rErr := r.ReadAll()
-	if rErr != nil {
-		return nil, rErr
-	}
+	return readRecords(file, ctx, cancel)
+}
 
-	pokemons, err := parseCSVData(records)
-	if err != nil {
-		return nil, err
-	}
+func readRecords(r io.Reader, ctx context.Context, cancel context.CancelFunc) <-chan models.Pokemon {
+	out := make(chan models.Pokemon)
+	go func(ctx context.Context, cancel context.CancelFunc) {
 
-	return pokemons, nil
+		reader := csv.NewReader(r)
+		_, err := reader.Read()
+		if err != nil {
+			cancel()
+			return
+		}
+		for {
+			record, err := reader.Read()
+			if err == io.EOF {
+				cancel()
+				break
+			}
+			if err != nil {
+				cancel()
+				continue
+			}
+
+			pokemon, err := parseCSVData(record)
+			if err != nil {
+				cancel()
+				continue
+			}
+
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				out <- *pokemon
+			}
+
+		}
+		close(out)
+	}(ctx, cancel)
+	return out
+
 }
 
 func buildRecords(pokemons []models.Pokemon) [][]string {
@@ -67,39 +101,32 @@ func buildRecords(pokemons []models.Pokemon) [][]string {
 	return records
 }
 
-func parseCSVData(records [][]string) ([]models.Pokemon, error) {
-	var pokemons []models.Pokemon
-	for i, record := range records {
-		if i == 0 {
-			continue
-		}
+func parseCSVData(record []string) (*models.Pokemon, error) {
 
-		id, err := strconv.Atoi(record[0])
-		if err != nil {
-			return nil, err
-		}
-
-		height, err := strconv.Atoi(record[2])
-		if err != nil {
-			return nil, err
-		}
-
-		weight, err := strconv.Atoi(record[3])
-		if err != nil {
-			return nil, err
-		}
-
-		pokemon := models.Pokemon{
-			ID:              id,
-			Name:            record[1],
-			Height:          height,
-			Weight:          weight,
-			Abilities:       nil,
-			FlatAbilityURLs: record[4],
-			EffectEntries:   nil,
-		}
-		pokemons = append(pokemons, pokemon)
+	id, err := strconv.Atoi(record[0])
+	if err != nil {
+		return nil, err
 	}
 
-	return pokemons, nil
+	height, err := strconv.Atoi(record[2])
+	if err != nil {
+		return nil, err
+	}
+
+	weight, err := strconv.Atoi(record[3])
+	if err != nil {
+		return nil, err
+	}
+
+	pokemon := &models.Pokemon{
+		ID:              id,
+		Name:            record[1],
+		Height:          height,
+		Weight:          weight,
+		Abilities:       nil,
+		FlatAbilityURLs: record[4],
+		EffectEntries:   nil,
+	}
+
+	return pokemon, nil
 }

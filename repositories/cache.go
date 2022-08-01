@@ -25,12 +25,10 @@ func NewCache() Cache {
 	return Cache{redis.NewClient(options)}
 }
 
-func (c Cache) Save(ctx context.Context, pokemons []models.Pokemon) error {
+func (c Cache) Save(ctx context.Context, pokemon models.Pokemon) error {
 	hashMap := make(map[string]interface{})
-	for _, p := range pokemons {
-		hashMap[fmt.Sprintf("%d", p.ID)] = p
-	}
 
+	hashMap[fmt.Sprintf("%d", pokemon.ID)] = pokemon
 	return c.redis.HSet(ctx, cacheKey, hashMap).Err()
 }
 
