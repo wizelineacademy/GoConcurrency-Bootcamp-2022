@@ -1,6 +1,7 @@
 package use_cases
 
 import (
+	"fmt"
 	"strings"
 	"sync"
 
@@ -12,7 +13,7 @@ type api interface {
 }
 
 type writer interface {
-	Write(pokemons <-chan models.Pokemon) error
+	Write(pokemons []models.Pokemon) error
 }
 
 type Fetcher struct {
@@ -25,9 +26,21 @@ func NewFetcher(api api, storage writer) Fetcher {
 }
 
 func (f Fetcher) Fetch(from, to int) error {
-	return f.storage.Write(
-		f.pokeGenerator(from, to),
+	if from > to {
+		return fmt.Errorf("'to' must be greater than or equal to 'from'")
+	}
+
+	var (
+		pokemons = make([]models.Pokemon, to-from+1)
+		i        int
 	)
+
+	for p := range f.pokeGenerator(from, to) {
+		pokemons[i] = p
+		i++
+	}
+
+	return f.storage.Write(pokemons)
 }
 
 func (f Fetcher) pokeGenerator(from, to int) <-chan models.Pokemon {
