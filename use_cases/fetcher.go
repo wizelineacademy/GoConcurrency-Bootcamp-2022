@@ -40,8 +40,7 @@ func (f Fetcher) pokeGenerator(from, to int) <-chan models.Pokemon {
 	wg.Add(n)
 
 	for i := from; i <= to; i++ {
-		id := i
-		go func() error {
+		go func(id int) error {
 			defer wg.Done()
 
 			pokemon, err := f.api.FetchPokemon(id)
@@ -56,7 +55,7 @@ func (f Fetcher) pokeGenerator(from, to int) <-chan models.Pokemon {
 			pokemon.FlatAbilityURLs = strings.Join(flatAbilities, "|")
 			pokemons <- pokemon
 			return nil
-		}()
+		}(i)
 	}
 
 	go func() {
