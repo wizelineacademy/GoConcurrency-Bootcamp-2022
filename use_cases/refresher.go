@@ -30,91 +30,46 @@ func NewRefresher(reader reader, saver saver, fetcher fetcher) Refresher {
 }
 
 func (r Refresher) Refresh(ctx context.Context) error {
+	var pokemons []models.Pokemon
+	var numWorkers = 3
+	var workers []<-chan models.Pokemon
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	pokemons, err := r.Read()
 
 	if err != nil {
 		return err
 	}
 
-	lenPokemons := len(pokemons)
-	slicePokemons := int64(lenPokemons / 2)
+	dataChan := r.ReadDataChannel(pokemons)
 
-	var chanFanIn []<-chan models.Pokemon
-
-	ctx, cancel := context.WithCancel(context.Background())
-
-	// verify if necessary slice pokemos
-	if lenPokemons > 10 {
-		chanFanIn = append(chanFanIn, r.generateFainIN(pokemons[0:slicePokemons]))
-		chanFanIn = append(chanFanIn, r.generateFainIN(pokemons[slicePokemons:lenPokemons]))
+	for i := 0; i < numWorkers; i++ {
+		workers = append(workers, r.getAbilities(dataChan, cancel))
 	}
 
-	chanFanINMerge := r.mergefANiN(chanFanIn...)
-
-	// create 5 worker fanOut
-	chanFanOut1 := r.generateFanOut(chanFanINMerge, cancel)
-	chanFanOut2 := r.generateFanOut(chanFanINMerge, cancel)
-	chanFanOut3 := r.generateFanOut(chanFanINMerge, cancel)
-	chanFanOut4 := r.generateFanOut(chanFanINMerge, cancel)
-	chanFanOut5 := r.generateFanOut(chanFanINMerge, cancel)
-
-	for {
-		if chanFanOut1 == nil && chanFanOut2 == nil && chanFanOut3 == nil && chanFanOut4 == nil && chanFanOut5 == nil {
-			break
-		}
-
-		select {
-		case p, ok := <-chanFanOut1:
-			if !ok {
-				chanFanOut1 = nil
-			}
-			r.completeAbilities(pokemons, p)
-		case p, ok := <-chanFanOut2:
-			if !ok {
-				chanFanOut2 = nil
-			}
-			r.completeAbilities(pokemons, p)
-		case p, ok := <-chanFanOut3:
-			if !ok {
-				chanFanOut3 = nil
-			}
-			r.completeAbilities(pokemons, p)
-		case p, ok := <-chanFanOut4:
-			if !ok {
-				chanFanOut4 = nil
-			}
-			r.completeAbilities(pokemons, p)
-		case p, ok := <-chanFanOut5:
-			if !ok {
-				chanFanOut5 = nil
-			}
-			r.completeAbilities(pokemons, p)
-		case <-ctx.Done():
-			chanFanOut1 = nil
-			chanFanOut2 = nil
-			chanFanOut3 = nil
-			chanFanOut4 = nil
-			chanFanOut5 = nil
-		}
+	for p := range r.FanIN(workers...) {
+		pokemons = append(pokemons, p)
 	}
 
 	// if call function cancel --> cancel context
 	return r.Save(ctx, pokemons)
 }
 
-func (r Refresher) generateFainIN(pokemons []models.Pokemon) chan models.Pokemon {
-	chanFanIN := make(chan models.Pokemon)
+func (r Refresher) ReadDataChannel(pokemons []models.Pokemon) chan models.Pokemon {
+	ch := make(chan models.Pokemon)
 	go func() {
 		for _, pokemon := range pokemons {
-			chanFanIN <- pokemon
+			ch <- pokemon
 		}
-		close(chanFanIN)
+		close(ch)
 	}()
 
-	return chanFanIN
+	return ch
 }
 
-func (r Refresher) mergefANiN(chansPokemons ...<-chan models.Pokemon) chan models.Pokemon {
+func (r Refresher) FanIN(chansPokemons ...<-chan models.Pokemon) chan models.Pokemon {
 	var wg = new(sync.WaitGroup)
 	out := make(chan models.Pokemon)
 
@@ -139,7 +94,7 @@ func (r Refresher) mergefANiN(chansPokemons ...<-chan models.Pokemon) chan model
 	return out
 }
 
-func (r Refresher) generateFanOut(pokemons chan models.Pokemon, cancel context.CancelFunc) chan models.Pokemon {
+func (r Refresher) getAbilities(pokemons chan models.Pokemon, cancel context.CancelFunc) chan models.Pokemon {
 	ch := make(chan models.Pokemon)
 	go func() {
 		defer close(ch)
@@ -163,12 +118,4 @@ func (r Refresher) generateFanOut(pokemons chan models.Pokemon, cancel context.C
 		}
 	}()
 	return ch
-}
-
-func (r Refresher) completeAbilities(pokemons []models.Pokemon, pokemon models.Pokemon) {
-	for i, p := range pokemons {
-		if p.ID == pokemon.ID {
-			pokemons[i] = pokemon
-		}
-	}
 }
