@@ -3,7 +3,6 @@ package use_cases
 import (
 	"GoConcurrency-Bootcamp-2022/models"
 	"context"
-	"fmt"
 	"strings"
 	"sync"
 )
@@ -36,18 +35,17 @@ func (r Refresher) Refresh(ctx context.Context) error {
 		return err
 	}
 
-	done := make(chan struct{})
-	defer close(done)
+	stopSignal := make(chan struct{})
+	defer close(stopSignal)
 
-	in := r.gen(done, pokemons)
-	c1 := r.sq(done, in)
-	c2 := r.sq(done, in)
-	c3 := r.sq(done, in)
+	pokemonChannel := r.generatePokemonChannel(stopSignal, pokemons)
+	c1 := r.setPokemonAbility(stopSignal, pokemonChannel)
+	c2 := r.setPokemonAbility(stopSignal, pokemonChannel)
+	c3 := r.setPokemonAbility(stopSignal, pokemonChannel)
 
 	var updatedPokemons []models.Pokemon
-	for p := range r.merge(done, c1, c2, c3) {
-		fmt.Println("ng-updatedp", p)
-		updatedPokemons = append(updatedPokemons, p)
+	for pokemon := range r.merge(stopSignal, c1, c2, c3) {
+		updatedPokemons = append(updatedPokemons, pokemon)
 	}
 
 	if err := r.Save(ctx, updatedPokemons); err != nil {
@@ -57,22 +55,21 @@ func (r Refresher) Refresh(ctx context.Context) error {
 	return nil
 }
 
-func (r Refresher) gen(done <-chan struct{}, pokemons []models.Pokemon) <-chan models.Pokemon {
+func (r Refresher) generatePokemonChannel(stopSignal <-chan struct{}, pokemons []models.Pokemon) <-chan models.Pokemon {
 	out := make(chan models.Pokemon)
 	go func() {
 		defer close(out)
 		for _, p := range pokemons {
 			select {
 			case out <- p:
-			case <-done:
-				fmt.Print("gen --done")
+			case <-stopSignal:
 				return
 			}
 		}
 	}()
 	return out
 }
-func (r Refresher) sq(done chan struct{}, in <-chan models.Pokemon) <-chan models.Pokemon {
+func (r Refresher) setPokemonAbility(stopSignal chan struct{}, in <-chan models.Pokemon) <-chan models.Pokemon {
 	out := make(chan models.Pokemon)
 	go func() {
 		defer close(out)
@@ -82,7 +79,7 @@ func (r Refresher) sq(done chan struct{}, in <-chan models.Pokemon) <-chan model
 			for _, url := range urls {
 				ability, err := r.FetchAbility(url)
 				if err != nil {
-					done <- struct{}{}
+					stopSignal <- struct{}{}
 				}
 
 				for _, ee := range ability.EffectEntries {
@@ -93,34 +90,33 @@ func (r Refresher) sq(done chan struct{}, in <-chan models.Pokemon) <-chan model
 
 			select {
 			case out <- pokemon:
-			case <-done:
-				fmt.Print("sq-- done")
+			case <-stopSignal:
 				return
 			}
 		}
 	}()
 	return out
 }
-func (r Refresher) merge(done <-chan struct{}, cs ...<-chan models.Pokemon) <-chan models.Pokemon {
+func (r Refresher) merge(stopSignal <-chan struct{}, channels ...<-chan models.Pokemon) <-chan models.Pokemon {
 	var wg sync.WaitGroup
-	out := make(chan models.Pokemon)
+	outChannel := make(chan models.Pokemon)
 	output := func(c <-chan models.Pokemon) {
 		defer wg.Done()
-		for n := range c {
+		for pokemon := range c {
 			select {
-			case out <- n:
-			case <-done:
+			case outChannel <- pokemon:
+			case <-stopSignal:
 				return
 			}
 		}
 	}
-	wg.Add(len(cs))
-	for _, c := range cs {
+	wg.Add(len(channels))
+	for _, c := range channels {
 		go output(c)
 	}
 	go func() {
 		wg.Wait()
-		close(out)
+		close(outChannel)
 	}()
-	return out
+	return outChannel
 }

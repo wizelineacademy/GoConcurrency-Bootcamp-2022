@@ -2,7 +2,6 @@ package use_cases
 
 import (
 	"GoConcurrency-Bootcamp-2022/models"
-	"fmt"
 	"strings"
 	"sync"
 )
@@ -31,7 +30,7 @@ func (f Fetcher) Fetch(from, to int) error {
 		ids = append(ids, id)
 	}
 	c := generator(ids)
-	out := makeRequests(c, f)
+	out := f.makeRequests(c)
 	for {
 		pokemon, ok := <-out
 		if !ok {
@@ -53,7 +52,7 @@ func generator(ids []int) <-chan int {
 	return out
 }
 
-func makeRequests(in <-chan int, f Fetcher) <-chan models.Pokemon {
+func (f Fetcher) makeRequests(in <-chan int) <-chan models.Pokemon {
 	var (
 		n   = cap(in)
 		out = make(chan models.Pokemon, n)
@@ -63,8 +62,10 @@ func makeRequests(in <-chan int, f Fetcher) <-chan models.Pokemon {
 	for id := range in {
 		go func(id int) {
 			defer wg.Done()
-			fmt.Println("ng-id", id)
-			pokemon, _ := f.api.FetchPokemon(id)
+			pokemon, error := f.api.FetchPokemon(id)
+			if error != nil {
+				return
+			}
 			var flatAbilities []string
 			for _, t := range pokemon.Abilities {
 				flatAbilities = append(flatAbilities, t.Ability.URL)
