@@ -17,6 +17,10 @@ type Pokemon struct {
 	EffectEntries   []string `json:"effect_entries"`
 }
 
+type PokeError struct {
+	Error error
+}
+
 func (p Pokemon) MarshalBinary() ([]byte, error) {
 	return json.Marshal(p)
 }
