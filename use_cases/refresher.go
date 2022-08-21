@@ -34,20 +34,21 @@ func NewRefresher(reader reader, saver saver, fetcher fetcher) Refresher {
 }
 
 func (r Refresher) Refresh(ctx context.Context) error {
-
 	var (
 		recordsBatch [][]string
-		done         = make(chan struct{})
-		errChan      = make(chan models.PokeError)
-		wg           = sync.WaitGroup{}
-		err          error
+		//done         = make(chan struct{})
+		errChan = make(chan models.PokeError)
+		wg      = sync.WaitGroup{}
+		err     error
 	)
+	defer close(errChan)
 
 	records, err := r.Read()
 	if err != nil {
 		return err
 	}
 
+	ctx, cancel := context.WithCancel(ctx)
 	for i, record := range records {
 		if i == 0 { // header
 			continue
@@ -61,32 +62,53 @@ func (r Refresher) Refresh(ctx context.Context) error {
 		recordsBatch[ix] = record
 
 		if ix == cons.BATCH_SIZE-1 {
-			test(parsePokemons(recordsBatch, done, errChan, &wg))
+			r.savePokemonsToCache(
+				r.fetchPokemonsWithAbilities(
+					parsePokemons(recordsBatch, errChan, &wg, ctx),
+				),
+			)
 		}
 	}
 
 	go func() {
-		if pokeError := <-errChan; pokeError.Error != nil {
-			done <- struct{}{} // signal the other pipeline stages to stop
-			err = pokeError.Error
+		for pokeError := range errChan {
+			if pokeError.Error != nil {
+				//debug
+				fmt.Printf("ERROR FOUND: %s\n", pokeError.Error)
+				cancel()
+				//	done <- struct{}{} // signal the other pipeline stages to stop
+				err = pokeError.Error
+			}
 		}
 	}()
 
 	wg.Wait()
+	fmt.Println("FINISHED WAITING")
 
 	return err
 }
 
-func test(pokemonsChan chan models.Pokemon,
-	done chan struct{},
+func test(
+	pokemonsChan chan models.Pokemon,
+	//	done chan struct{},
 	errChan chan models.PokeError,
-	wg *sync.WaitGroup) {
+	wg *sync.WaitGroup,
+	ctx context.Context,
+) (
+	chan models.Pokemon,
+	//	chan struct{},
+	chan models.PokeError,
+	*sync.WaitGroup,
+	context.Context,
+) {
 	go func() {
 		defer wg.Done()
 		wg.Add(1)
 		for {
 			select {
-			case <-done:
+			case <-ctx.Done():
+				//debug
+				fmt.Println("TEST: ERROR FOUND, ABORTING")
 				return
 			default:
 				p, ok := <-pokemonsChan
@@ -97,26 +119,31 @@ func test(pokemonsChan chan models.Pokemon,
 			}
 		}
 	}()
+	return pokemonsChan, errChan, wg, ctx
 }
 
 func parsePokemons(recordsBatch [][]string,
-	done chan struct{},
 	errChan chan models.PokeError,
-	wg *sync.WaitGroup) (
+	wg *sync.WaitGroup,
+	ctx context.Context) (
 	chan models.Pokemon,
-	chan struct{},
 	chan models.PokeError,
-	*sync.WaitGroup) {
-
+	*sync.WaitGroup,
+	context.Context,
+) {
 	pokemonsChan := make(chan models.Pokemon, cons.BATCH_SIZE)
 
 	go func() {
-		defer close(pokemonsChan)
+		//debug
+		fmt.Println("PARSING POKEMON")
 		defer wg.Done()
+		defer close(pokemonsChan)
 		wg.Add(1)
 		for _, r := range recordsBatch {
 			select {
-			case <-done:
+			case <-ctx.Done():
+				//debug
+				fmt.Println("parsePokemons: ERROR FOUND, ABORTING")
 				return
 			default:
 				pokemon, err := parsePokemon(r)
@@ -129,85 +156,9 @@ func parsePokemons(recordsBatch [][]string,
 		}
 	}()
 
-	return pokemonsChan, done, errChan, wg
+	return pokemonsChan, errChan, wg, ctx
 }
 
-/* func recordsGenerator(records [][]string) chan [][]string {
-	recordsChan := make(chan [][]string)
-	go func() {
-		defer close(recordsChan)
-		var (
-			l     = 0
-			batch [][]string
-		)
-		for i, r := range records {
-			switch {
-			case i == 0:
-				continue
-			case l == 0:
-				batch = make([][]string, cons.BATCH_SIZE)
-				batch[l] = r
-				l++
-			case l == cons.BATCH_SIZE:
-				recordsChan <- batch
-				l = 0
-			}
-		}
-		if l > 0 && l < cons.BATCH_SIZE {
-			recordsChan <- batch
-		}
-	}()
-	return recordsChan
-} */
-
-/* func (r Refresher) parsePokemons(recordsBatch [][]string,
-	pokeChan chan []models.Pokemon,
-	done <-chan struct{},
-	errChan chan models.PokeError,
-) (chan []models.Pokemon, <-chan struct{}, chan models.PokeError) {
-	var (
-		size      = 0
-		pokeBatch = make([]models.Pokemon, cons.BATCH_SIZE)
-	)
-
-	go func() {
-		for _, r := range recordsBatch {
-			if r == nil {
-				continue
-			}
-
-			select {
-			case <-done:
-				if size > 0 {
-					pokeChan <- pokeBatch
-				}
-				return
-			default:
-				pokemon, err := parsePokemon(r)
-				switch {
-				case err != nil:
-					errChan <- models.PokeError{err}
-					if size > 0 {
-						pokeChan <- pokeBatch
-					}
-					return
-				case size == 0:
-					pokeBatch = make([]models.Pokemon, cons.BATCH_SIZE)
-					fallthrough
-				case size == cons.BATCH_SIZE:
-					pokeChan <- pokeBatch
-					size = 0
-				default:
-					pokeBatch[size] = pokemon
-					size++
-				}
-			}
-		}
-	}()
-
-	return pokeChan, done, errChan
-}
-*/
 // TODO: To avoid breaking clean architecture, expose it as public function from reader layer
 func parsePokemon(record []string) (models.Pokemon, error) {
 	id, err := strconv.Atoi(record[0])
@@ -236,70 +187,86 @@ func parsePokemon(record []string) (models.Pokemon, error) {
 	}, err
 }
 
-/* func (r Refresher) fetchPokemonsWithAbilities(
-	sourceBatchesChannel chan []models.Pokemon,
-	done <-chan struct{},
+func (r Refresher) fetchPokemonsWithAbilities(
+	pokemonsBatch chan models.Pokemon,
 	errChan chan models.PokeError,
-) (chan []models.Pokemon, <-chan struct{}, chan models.PokeError) {
+	wg *sync.WaitGroup,
+	ctx context.Context,
+) (
+	chan models.Pokemon,
+	chan models.PokeError,
+	*sync.WaitGroup,
+	context.Context,
+) {
+	outBatch := make(chan models.Pokemon, cons.BATCH_SIZE)
 	go func() {
-		for batch := range sourceBatchesChannel {
+		//debug
+		fmt.Println("fetchPokemonsWithAbilities")
+		defer wg.Done()
+		defer close(outBatch)
+		wg.Add(1)
+		for pokemon := range pokemonsBatch {
 			select {
-			case <-done:
+			case <-ctx.Done():
+				//debug
+				fmt.Println("fetchPokemonsWithAbilities: ERROR FOUND, ABORTING")
 				return
 			default:
-				for p := range batch {
-					pokemon, err := r.fetchPokemonWithAbilities(p)
-					if err != nil {
-						errChan <- models.PokeError{err}
-						return
-					}
-					outChan <- pokemon
+				pokemon, err := r.fetchPokemonWithAbilities(pokemon)
+				if err != nil {
+					errChan <- models.PokeError{err}
+					return
 				}
+				outBatch <- pokemon
 			}
 		}
-		errChan <- models.PokeError{}
 	}()
-	return outChan
-} */
+	return outBatch, errChan, wg, ctx
+}
 
-func (r Refresher) savePokemonsToCache(inStream <-chan models.Pokemon,
-	done chan struct{},
+func (r Refresher) savePokemonsToCache(
+	inStreamBatch chan models.Pokemon,
 	errChan chan models.PokeError,
-	ctx context.Context) {
-	pokemonsBatch := make([]models.Pokemon, 5)
+	wg *sync.WaitGroup,
+	ctx context.Context,
+) (
+	chan models.Pokemon,
+	chan models.PokeError,
+	*sync.WaitGroup,
+	context.Context,
+) {
+	pokemonsBatch := []models.Pokemon{}
 	go func() {
-		for p := range inStream {
+		//debug
+		fmt.Println("savePokemonsToCache")
+		defer wg.Done()
+		defer func() {
+			if len(pokemonsBatch) > 0 {
+				fmt.Println("SAVING AND EXITING")
+				if err := r.Save(context.Background(), pokemonsBatch); err != nil {
+					fmt.Printf("ERROR WHILE SAVING: %s\n", err.Error())
+					//errChan <- models.PokeError{err}
+					fmt.Println("FINISHED SAVING ERR TO CHANNEL")
+				}
+				fmt.Println("FINISHED SAVING TO CACHE")
+			}
+			fmt.Println("RETURNING")
+			return
+		}()
+
+		wg.Add(1)
+		for pokemon := range inStreamBatch {
 			select {
-			/* 			case pokeErr := <-errChan:
-			if pokeErr.Error != nil {
-				if len(pokemonsBatch) > 0 {
-					if err := r.Save(ctx, pokemonsBatch); err != nil {
-						errChan <- models.PokeError{err}
-					}
-				}
-				return
-			} */
-			case <-done:
-				if len(pokemonsBatch) > 0 {
-					if err := r.Save(ctx, pokemonsBatch); err != nil {
-						errChan <- models.PokeError{err}
-					}
-				}
+			case <-ctx.Done():
+				//debug
+				fmt.Println("savePokemonsToCache: ERROR FOUND, ABORTING")
 				return
 			default:
-				if len(pokemonsBatch) == 5 {
-					if err := r.Save(ctx, pokemonsBatch); err != nil {
-						errChan <- models.PokeError{err}
-						return
-					}
-					pokemonsBatch = make([]models.Pokemon, 5)
-				} else {
-					pokemonsBatch = append(pokemonsBatch, p)
-				}
+				pokemonsBatch = append(pokemonsBatch, pokemon)
 			}
 		}
-		errChan <- models.PokeError{}
 	}()
+	return inStreamBatch, errChan, wg, ctx
 }
 
 func (r Refresher) fetchPokemonWithAbilities(p models.Pokemon) (models.Pokemon, error) {

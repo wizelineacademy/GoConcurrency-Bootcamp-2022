@@ -45,8 +45,6 @@ func (l LocalStorage) Read() ([][]string, error) {
 	return records, nil
 }
 
-}
-
 func buildRecords(pokemons []models.Pokemon) [][]string {
 	headers := []string{"id", "name", "height", "weight", "flat_abilities"}
 	records := [][]string{headers}
