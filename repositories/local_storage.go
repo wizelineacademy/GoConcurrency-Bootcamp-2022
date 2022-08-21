@@ -30,7 +30,7 @@ func (l LocalStorage) Write(pokemons []models.Pokemon) error {
 	return nil
 }
 
-func (l LocalStorage) Read() ([]models.Pokemon, error) {
+func (l LocalStorage) Read() ([][]string, error) {
 	file, fErr := os.Open(filePath)
 	defer file.Close()
 	if fErr != nil {
@@ -42,18 +42,13 @@ func (l LocalStorage) Read() ([]models.Pokemon, error) {
 	if rErr != nil {
 		return nil, rErr
 	}
-
-	pokemons, err := parseCSVData(records)
-	if err != nil {
-		return nil, err
-	}
-
-	return pokemons, nil
+	return records, nil
 }
 
 func buildRecords(pokemons []models.Pokemon) [][]string {
 	headers := []string{"id", "name", "height", "weight", "flat_abilities"}
 	records := [][]string{headers}
+
 	for _, p := range pokemons {
 		record := fmt.Sprintf("%d,%s,%d,%d,%s",
 			p.ID,
