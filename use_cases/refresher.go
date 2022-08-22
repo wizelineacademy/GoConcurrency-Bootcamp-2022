@@ -85,7 +85,11 @@ func (r Refresher) Refresh(ctx context.Context) error {
 	wg.Wait()
 	fmt.Println("FINISHED WAITING")
 
-	return err
+	if err != nil {
+		fmt.Printf("Error found: %s\nAborting processing\n", err.Error())
+	}
+
+	return nil
 }
 
 func test(
